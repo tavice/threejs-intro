@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import pdf2svg from 'pdf2svg';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.js',
@@ -30,14 +29,26 @@ function FileUploader() {
   };
 
   const convertToSVG = async (file) => {
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const arrayBuffer = event.target.result;
-      const result = await pdf2svg(arrayBuffer, { width: 800, height: 600 });
+    const formData = new FormData();
+    formData.append('file', file);
 
-      setSvgData(result.svg);
-    };
-    reader.readAsArrayBuffer(file);
+    try {
+      const response = await fetch('http://127.0.0.1:5000//api/convert/pdf-to-svg', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const svgData = await response.text();
+        setSvgData(svgData);
+        console.log('SVG DATA is', svgData);
+      } else {
+        throw new Error('PDF to SVG conversion failed');
+      }
+    } catch (error) {
+      console.error(error);
+      // Handle error state accordingly
+    }
   };
 
   return (
